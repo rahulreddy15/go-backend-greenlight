@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"flag"
-	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -71,17 +69,10 @@ func main() {
 		models: data.NewModels(db),
 	}
 
-	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", cfg.port),
-		Handler:      app.routes(),
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
+	err = app.serve()
+	if err != nil {
+		logger.Fatal().Err(err)
 	}
-
-	logger.Printf("starting %s server on port %d", cfg.env, cfg.port)
-	err = srv.ListenAndServe()
-	logger.Fatal().Err(err)
 }
 
 func openDB(cfg config) (*sql.DB, error) {
