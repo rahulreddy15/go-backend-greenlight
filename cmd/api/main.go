@@ -52,6 +52,10 @@ func main() {
 	zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
 		return filepath.Base(file) + ":" + strconv.Itoa(line)
 	}
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	if cfg.env == "development" {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	}
 	logger := zerolog.New(os.Stdout).With().Timestamp().Caller().Logger()
 
 	db, err := openDB(cfg)
