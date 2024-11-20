@@ -5,10 +5,13 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strconv"
 	"time"
+
+	"github.com/rs/zerolog"
 
 	_ "github.com/lib/pq"
 	"greenlight.rahulreddy.in/internal/data"
@@ -29,7 +32,7 @@ type config struct {
 
 type application struct {
 	config config
-	logger *log.Logger
+	logger zerolog.Logger
 	models data.Models
 }
 
@@ -46,11 +49,14 @@ func main() {
 
 	flag.Parse()
 
-	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
+	zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
+		return filepath.Base(file) + ":" + strconv.Itoa(line)
+	}
+	logger := zerolog.New(os.Stdout).With().Timestamp().Caller().Logger()
 
 	db, err := openDB(cfg)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Fatal().Err(err)
 	}
 	defer db.Close()
 	logger.Printf("database connection pool established")
@@ -71,7 +77,7 @@ func main() {
 
 	logger.Printf("starting %s server on port %d", cfg.env, cfg.port)
 	err = srv.ListenAndServe()
-	logger.Fatal(err)
+	logger.Fatal().Err(err)
 }
 
 func openDB(cfg config) (*sql.DB, error) {
